@@ -15,4 +15,6 @@ grok --cwd <dir> -m <model> --sandbox workspace --permission-mode dontAsk --prom
 
 The workspace sandbox can block network and paths outside the repository. A custom profile can accidentally broaden access; inspect it before use.
 
+Grok may also install an `agent` compatibility alias. Do not use it: `agent` is also Cursor CLI's documented executable. Always invoke Grok as `grok`.
+
 Source: https://docs.x.ai/build/settings/reference

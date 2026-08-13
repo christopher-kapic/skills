@@ -3,8 +3,8 @@
 **Warn the user before invocation: Claude Code consumes Claude usage credits.** Verified locally with Claude Code 2.1.228; recheck `claude --help`.
 
 ```sh
-claude -p --model <model> --permission-mode dontAsk "<prompt>"
-claude -p --model <model> --permission-mode dontAsk < prompt.txt
+claude -p --no-session-persistence --model <model> --permission-mode dontAsk "<prompt>"
+claude -p --no-session-persistence --model <model> --permission-mode dontAsk < prompt.txt
 ```
 
 - **Models:** `--model` accepts an alias or full ID. No model-list subcommand is exposed; use interactive `/model`, current documentation, or an organization-approved ID.

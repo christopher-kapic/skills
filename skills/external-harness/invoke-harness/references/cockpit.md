@@ -3,8 +3,8 @@
 **Treat noninteractive use as experimental.** Verified locally with Cockpit 0.1.0. Before real work, recheck `cockpit run --help` and run a harmless read-only smoke test.
 
 ```sh
-cockpit run -C <dir> -m <provider/model> --permission-mode auto --max-turns <n> --timeout <seconds> "<prompt>"
-cockpit run -C <dir> -m <provider/model> --permission-mode auto --max-turns <n> --timeout <seconds> --prompt-file prompt.txt
+cockpit run --ephemeral -C <dir> -m <provider/model> --permission-mode auto --max-turns <n> --timeout <seconds> "<prompt>"
+cockpit run --ephemeral -C <dir> -m <provider/model> --permission-mode auto --max-turns <n> --timeout <seconds> --prompt-file prompt.txt
 ```
 
 - **Models:** `-m/--model` uses `provider/model-id`. List configured models with `cockpit models`; refresh provider catalogs with `cockpit fetch-models` only when authorized.

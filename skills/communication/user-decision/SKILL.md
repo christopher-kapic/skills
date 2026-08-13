@@ -7,6 +7,8 @@ description: Reduce excessive, complex, or choice-heavy output to the decisions 
 
 Turn analysis into a short decision queue. Preserve the choices needed to establish user intent; remove background that does not help the user choose.
 
+This skill uses only the portable Agent Skills `name` and `description` fields. Other skills should request it by name in plain language, not with a harness-specific `$` or `/` invocation prefix.
+
 ## Prepare
 
 1. Identify only decisions that require user intent. Do not ask about choices the agent can safely resolve from context.

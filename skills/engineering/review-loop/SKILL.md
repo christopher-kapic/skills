@@ -5,7 +5,9 @@ description: Implement important or complex changes in a git repository through 
 
 # Review Loop
 
-Run an implement → test → independent review → fix loop. The main agent only coordinates; delegate every implementation and review pass to a fresh subagent or non-interactive external harness.
+Run an implement → test → independent review → fix loop. The main agent only coordinates; delegate every implementation and review pass to a fresh worker.
+
+This skill uses only portable Agent Skills metadata and refers to other skills by name in plain language. Do not assume that `$name` or `/name` invocation syntax works in every harness.
 
 ## Inputs
 
@@ -15,15 +17,19 @@ Treat `greenfield: true` as permission to make breaking changes. Otherwise, pres
 
 ## Clarify decisions
 
-If implementation details require user intent, use `$user-decision` before proceeding. If the user explicitly or implicitly requests noninteractive work, choose each best long-term option without asking. Use quick options only when the user requests them for the entire review loop.
+If implementation details require user intent, invoke the `user-decision` skill before proceeding. If the user explicitly or implicitly requests noninteractive work, choose each best long-term option without asking. Use quick options only when the user requests them for the entire review loop.
+
+## Worker selection
+
+For `current`, use a fresh native subagent when the current harness supports one. Otherwise, invoke a fresh noninteractive process of the current harness through the `invoke-harness` skill. For any named external harness, use `invoke-harness`. Each worker must receive the goal and required context in its initial prompt; do not rely on conversation state shared by a previous worker.
 
 ## Loop
 
 For each cycle, until no actionable findings remain or `max cycles` is reached:
 
-1. Delegate one implementation pass the goal and accumulated findings. Use a fresh subagent if the selected harness is current; otherwise invoke the external harness non-interactively.
+1. Delegate one implementation pass the goal and accumulated findings using the worker-selection rule.
 2. Capture the git diff. For `before_review`, run relevant tests and wait for results. For `parallel`, start tests without waiting.
-3. While `parallel` tests run or after `before_review` tests finish, delegate `review parallelism` independent review passes to fresh subagents if the review harness is current; otherwise use its external harness. Give each worker the goal, diff, relevant project context, and available test results. Ask for actionable correctness, compatibility, security, maintainability, or missing-test issues with file and line references; list out-of-scope suggestions and generalizable learnings separately.
+3. While `parallel` tests run or after `before_review` tests finish, delegate `review parallelism` independent review passes to fresh workers using the worker-selection rule. Give each worker the goal, diff, relevant project context, and available test results. Ask for actionable correctness, compatibility, security, maintainability, or missing-test issues with file and line references; list out-of-scope suggestions and generalizable learnings separately.
 4. For `parallel`, collect test results after reviews. For `after_review`, run tests now. For `skip`, do not run tests. Combine duplicate review findings and current test failures. If none remain, stop; otherwise pass accumulated review findings and only the latest test results to the next implementation worker.
 
 Do not report a change as ready if tests failed or required tests were skipped without saying so. On completion, summarize the implementation, review outcome, tests, risks, and out-of-scope suggestions. Briefly explain any generalizable reviewer learnings and ask whether to add them to `AGENTS.md` or `CLAUDE.md`.
