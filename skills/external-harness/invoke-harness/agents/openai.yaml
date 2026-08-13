@@ -1,0 +1,4 @@
+interface:
+  display_name: "Invoke External Harness"
+  short_description: "Run coding harnesses safely and headlessly"
+  default_prompt: "Use $invoke-harness to run this task through the selected external coding harness."
