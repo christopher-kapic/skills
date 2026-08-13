@@ -13,6 +13,10 @@ Use user values or these defaults: goal = current conversation (ask only if abse
 
 Treat `greenfield: true` as permission to make breaking changes. Otherwise, preserve compatibility; ask before a breaking change.
 
+## Clarify decisions
+
+If implementation details require user intent, use `$user-decision` before proceeding. If the user explicitly or implicitly requests noninteractive work, choose each best long-term option without asking. Use quick options only when the user requests them for the entire review loop.
+
 ## Loop
 
 For each cycle, until no actionable findings remain or `max cycles` is reached:
