@@ -1,0 +1,4 @@
+interface:
+  display_name: "User Decision"
+  short_description: "Turn complex choices into clear decisions"
+  default_prompt: "Use $user-decision to reduce this discussion to the decisions I need to make."

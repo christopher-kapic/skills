@@ -1,41 +1,25 @@
 ---
 name: review-loop
-description: For implementing and reviewing important or complex code changes in a git repo.
+description: Implement important or complex changes in a git repository through independent review-and-fix cycles. Use when a user asks for an implementation to be repeatedly reviewed, hardened, or iterated until it is ready to ship.
 ---
 
 # Review Loop
 
-Use subagents with fresh context to implement and review changes
+Run an implement → test → independent review → fix loop. The main agent only coordinates; delegate every implementation and review pass to a fresh subagent or non-interactive external harness.
 
-# User inputs
+## Inputs
 
-goal (aka prompt) (default: goal of the conversation prececding review loop, otherwise ask the user)
-implementation harness (default: current harness)
-implementation model (default: current model)
-review harness (default: current harness)
-review model (default: current model)
-review parallelism (default: 1)
-greenfield (default: false)
-test lifecycle: parallel|before_review|after_review|skip (default: parallel)
-max cycles (default: infinite)
+Use user values or these defaults: goal = current conversation (ask only if absent); implementation harness/model = current; review harness/model = current; review parallelism = 1; greenfield = false; test lifecycle = `parallel`; max cycles = unlimited.
 
-# Pseudocode
+Treat `greenfield: true` as permission to make breaking changes. Otherwise, preserve compatibility; ask before a breaking change.
 
-```
-def implement_changes(goal: `<changes to implement/prompt>`, feedback: [] | null):
-  if implementation_harness==current_harness:
-    implement_changes_with_implementation_model_subagent(goal, feedback)
-  if implementation_harness!=current_harness
-    implement_changes_by_invoking_external_harness_noninteractive_with_selected_implementation_model(goal, feedback)
+## Loop
 
-def evaluate_changes(goal: `<changes implemented/original prompt>`,):
-  evaluate if the changes are the best long term solution. If the project is greenfield, breaking changes are okay. Boil the ocean. We want the best implementation possible. If the project is not greenfield, then we still want the best long term implementation, but we cannot introduce breaking changes (eg: SQL schema changes that would break old clients) unless the user specifically approves them (if there are breaking changes, ask the user or refer to earlier user input
+For each cycle, until no actionable findings remain or `max cycles` is reached:
 
-def review_changes(goal: `<changes implemented/original prompt>`):
-  get_git_diff()
-  evaluate_changes(goal, diff)
+1. Delegate one implementation pass the goal and accumulated findings. Use a fresh subagent if the selected harness is current; otherwise invoke the external harness non-interactively.
+2. Capture the git diff. For `before_review`, run relevant tests and wait for results. For `parallel`, start tests without waiting.
+3. While `parallel` tests run or after `before_review` tests finish, delegate `review parallelism` independent review passes to fresh subagents if the review harness is current; otherwise use its external harness. Give each worker the goal, diff, relevant project context, and available test results. Ask for actionable correctness, compatibility, security, maintainability, or missing-test issues with file and line references; list out-of-scope suggestions and generalizable learnings separately.
+4. For `parallel`, collect test results after reviews. For `after_review`, run tests now. For `skip`, do not run tests. Combine duplicate review findings and current test failures. If none remain, stop; otherwise pass accumulated review findings and only the latest test results to the next implementation worker.
 
-def review_loop(goal: `<changes to implement/prompt>`, feedback: [] | null):
-  implement_changes(goal, feedback)
-  
-```
+Do not report a change as ready if tests failed or required tests were skipped without saying so. On completion, summarize the implementation, review outcome, tests, risks, and out-of-scope suggestions. Briefly explain any generalizable reviewer learnings and ask whether to add them to `AGENTS.md` or `CLAUDE.md`.
