@@ -11,9 +11,11 @@ This skill uses only portable Agent Skills metadata and refers to other skills b
 
 ## Inputs
 
-Use user values or these defaults: goal = current conversation (ask only if absent); implementation harness/model = current; review harness/model = current; review parallelism = 1; greenfield = false; test lifecycle = `parallel`; max cycles = unlimited.
+Use user values or these defaults: goal = current conversation (ask only if absent); implementation harness/model = current; review harness/model = current; review parallelism = 1; greenfield = false; test lifecycle = `parallel`; max cycles = unlimited; `propose_improvements` = false.
 
 Treat `greenfield: true` as permission to make breaking changes. Otherwise, preserve compatibility; ask before a breaking change.
+
+When `propose_improvements: true`, collect candidate changes to this skill's reusable implementation and review instructions that could prevent similar review findings in future delegated runs. Do not collect them when false. These proposals are advisory only; do not modify the skill or repository instructions unless the user separately asks.
 
 ## Clarify decisions
 
@@ -29,7 +31,7 @@ For each cycle, until no actionable findings remain or `max cycles` is reached:
 
 1. Delegate one implementation pass the goal and accumulated findings using the worker-selection rule.
 2. Capture the git diff. For `before_review`, run relevant tests and wait for results. For `parallel`, start tests without waiting.
-3. While `parallel` tests run or after `before_review` tests finish, delegate `review parallelism` independent review passes to fresh workers using the worker-selection rule. Give each worker the goal, diff, relevant project context, and available test results. Ask for actionable correctness, compatibility, security, maintainability, or missing-test issues with file and line references; list out-of-scope suggestions and generalizable learnings separately.
+3. While `parallel` tests run or after `before_review` tests finish, delegate `review parallelism` independent review passes to fresh workers using the worker-selection rule. Give each worker the goal, diff, relevant project context, and available test results. Ask for actionable correctness, compatibility, security, maintainability, or missing-test issues with file and line references; list out-of-scope suggestions separately. When `propose_improvements` is true, also list separately any generalizable skill-instruction improvements that would have enabled an earlier implementation or review worker to avoid the finding; exclude project-specific implementation advice.
 4. For `parallel`, collect test results after reviews. For `after_review`, run tests now. For `skip`, do not run tests. Combine duplicate review findings and current test failures. If none remain, stop; otherwise pass accumulated review findings and only the latest test results to the next implementation worker.
 
-Do not report a change as ready if tests failed or required tests were skipped without saying so. On completion, summarize the implementation, review outcome, tests, risks, and out-of-scope suggestions. Briefly explain any generalizable reviewer learnings and ask whether to add them to `AGENTS.md` or `CLAUDE.md`.
+Do not report a change as ready if tests failed or required tests were skipped without saying so. On completion, summarize the implementation, review outcome, tests, risks, and out-of-scope suggestions. If `propose_improvements` is true, add a concise **Potential skill improvements** section to the end report. Each item must state the reusable instruction change and the category of review iteration it is expected to prevent; omit empty or project-specific suggestions. Do not add the proposals to `AGENTS.md`, `CLAUDE.md`, or the skill unless the user separately asks.

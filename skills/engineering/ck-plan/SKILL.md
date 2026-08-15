@@ -11,7 +11,9 @@ This skill uses only portable Agent Skills metadata and refers to other skills b
 
 ## Inputs
 
-Use user values or these defaults: goal = current conversation (ask only if absent); planning harness/model = current; review harness/model = current; review parallelism = 1; max cycles = unlimited; output = display.
+Use user values or these defaults: goal = current conversation (ask only if absent); planning harness/model = current; review harness/model = current; review parallelism = 1; max cycles = unlimited; output = display; `propose_improvements` = false.
+
+When `propose_improvements: true`, collect candidate changes to this skill's reusable planning and review instructions that could prevent similar review findings in future delegated runs. Do not collect them when false. These proposals are advisory only; do not modify the skill or repository instructions unless the user separately asks.
 
 ## Clarify decisions
 
@@ -26,9 +28,9 @@ For `current`, use a fresh native subagent when the current harness supports one
 For each cycle, until no actionable findings remain or `max cycles` is reached:
 
 1. Delegate one planning pass the goal, relevant user decisions, repository context, current plan, and accumulated findings using the worker-selection rule. Require the worker to inspect the repository and produce a concrete, ordered plan with affected files, key design decisions, compatibility concerns, tests, and validation.
-2. Delegate `review parallelism` independent reviews of the plan to fresh workers using the worker-selection rule. Give each worker the goal, plan, and relevant repository context. Ask it to verify assumptions against the repository and report actionable gaps, sequencing problems, risks, missing tests, and unnecessary scope. List out-of-scope suggestions separately.
+2. Delegate `review parallelism` independent reviews of the plan to fresh workers using the worker-selection rule. Give each worker the goal, plan, and relevant repository context. Ask it to verify assumptions against the repository and report actionable gaps, sequencing problems, risks, missing tests, and unnecessary scope. List out-of-scope suggestions separately. When `propose_improvements` is true, also list separately any generalizable skill-instruction improvements that would have enabled an earlier planning or review worker to avoid the finding; exclude project-specific implementation advice.
 3. Combine duplicate findings. If none remain, accept the plan; otherwise accumulate them for the next planning worker.
 
 ## Deliver
 
-Include enough detail for an implementation agent to execute without rediscovering the design. Separate assumptions and out-of-scope suggestions from implementation steps. If the user requested a file, write the final plan there. Otherwise, display it. Report if `max cycles` stopped the loop before approval.
+Include enough detail for an implementation agent to execute without rediscovering the design. Separate assumptions and out-of-scope suggestions from implementation steps. If `propose_improvements` is true, add a concise **Potential skill improvements** section to the end report. Each item must state the reusable instruction change and the category of review iteration it is expected to prevent; omit empty or project-specific suggestions. If the user requested a file, write the final plan there. Otherwise, display it. Report if `max cycles` stopped the loop before approval.
