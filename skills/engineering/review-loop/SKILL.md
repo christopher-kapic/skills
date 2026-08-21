@@ -25,6 +25,8 @@ If implementation details require user intent, invoke the `user-decision` skill 
 
 For `current`, use a fresh native subagent when the current harness supports one. Otherwise, invoke a fresh noninteractive process of the current harness through the `invoke-harness` skill. For any named external harness, use `invoke-harness`. Each worker must receive the goal and required context in its initial prompt; do not rely on conversation state shared by a previous worker.
 
+Interpret “review loop with X” as X reviews while the current harness's fresh native subagents implement, unless the user explicitly assigns implementation to X. Honor explicit role assignments such as “X implements; Y reviews.”
+
 ## Loop
 
 For each cycle, until no actionable findings remain or `max cycles` is reached:
