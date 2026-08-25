@@ -33,7 +33,16 @@ For each cycle, until no actionable findings remain or `max cycles` is reached:
 
 1. Delegate one implementation pass the goal and accumulated findings using the worker-selection rule.
 2. Capture the git diff. For `before_review`, run relevant tests and wait for results. For `parallel`, start tests without waiting.
-3. While `parallel` tests run or after `before_review` tests finish, delegate `review parallelism` independent review passes to fresh workers using the worker-selection rule. Give each worker the goal, diff, relevant project context, and available test results. Ask for actionable correctness, compatibility, security, maintainability, or missing-test issues with file and line references; list out-of-scope suggestions separately. When `propose_improvements` is true, also list separately any generalizable skill-instruction improvements that would have enabled an earlier implementation or review worker to avoid the finding; exclude project-specific implementation advice.
-4. For `parallel`, collect test results after reviews. For `after_review`, run tests now. For `skip`, do not run tests. Combine duplicate review findings and current test failures. If none remain, stop; otherwise pass accumulated review findings and only the latest test results to the next implementation worker.
+3. While `parallel` tests run or after `before_review` tests finish, delegate `review parallelism` independent review passes to fresh workers using the worker-selection rule. Give each worker the goal, diff, relevant project context, and available test results. Ask for actionable correctness, compatibility, security, maintainability, or missing-test issues. Require code evidence (`path:line`, symbol, or test result) for each actionable finding; label anything not yet verifiable as a concern. List out-of-scope suggestions separately. When `propose_improvements` is true, also list separately any generalizable skill-instruction improvements that would have enabled an earlier implementation or review worker to avoid the finding; exclude project-specific implementation advice.
+4. Have one fresh critic audit the reviews against the goal, diff, repository, and available test results. Its response must end with exactly one verdict line:
+
+   ```text
+   AGREE
+   DISAGREE_EVIDENCE: <code citation or test result>
+   DISAGREE_CONCERN: <specific unverified objection>
+   ```
+
+   `AGREE` preserves all findings. `DISAGREE_EVIDENCE` may add, revise, or reject findings only as supported by the cited evidence. `DISAGREE_CONCERN` cannot suppress a finding: delegate one concise evidence-resolution pass using the worker-selection rule, then retain only claims grounded in code or tests. Do not continue reviewer–critic debate beyond this pass.
+5. For `parallel`, collect test results after reviews. For `after_review`, run tests now. For `skip`, do not run tests. Combine duplicate evidence-backed findings and current test failures. If none remain, stop; otherwise pass accumulated review findings and only the latest test results to the next implementation worker.
 
 Do not report a change as ready if tests failed or required tests were skipped without saying so. On completion, summarize the implementation, review outcome, tests, risks, and out-of-scope suggestions. If `propose_improvements` is true, add a concise **Potential skill improvements** section to the end report. Each item must state the reusable instruction change and the category of review iteration it is expected to prevent; omit empty or project-specific suggestions. Do not add the proposals to `AGENTS.md`, `CLAUDE.md`, or the skill unless the user separately asks.

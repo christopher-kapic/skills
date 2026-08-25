@@ -28,8 +28,17 @@ For `current`, use a fresh native subagent when the current harness supports one
 For each cycle, until no actionable findings remain or `max cycles` is reached:
 
 1. Delegate one planning pass the goal, relevant user decisions, repository context, current plan, and accumulated findings using the worker-selection rule. Require the worker to inspect the repository and produce a concrete, ordered plan with affected files, key design decisions, compatibility concerns, tests, and validation.
-2. Delegate `review parallelism` independent reviews of the plan to fresh workers using the worker-selection rule. Give each worker the goal, plan, and relevant repository context. Ask it to verify assumptions against the repository and report actionable gaps, sequencing problems, risks, missing tests, and unnecessary scope. List out-of-scope suggestions separately. When `propose_improvements` is true, also list separately any generalizable skill-instruction improvements that would have enabled an earlier planning or review worker to avoid the finding; exclude project-specific implementation advice.
-3. Combine duplicate findings. If none remain, accept the plan; otherwise accumulate them for the next planning worker.
+2. Delegate `review parallelism` independent reviews of the plan to fresh workers using the worker-selection rule. Give each worker the goal, plan, and relevant repository context. Ask it to verify assumptions against the repository and report actionable gaps, sequencing problems, risks, missing tests, and unnecessary scope. Require repository evidence (`path:line`, symbol, or command result) for each actionable finding; label anything not yet verifiable as a concern. List out-of-scope suggestions separately. When `propose_improvements` is true, also list separately any generalizable skill-instruction improvements that would have enabled an earlier planning or review worker to avoid the finding; exclude project-specific implementation advice.
+3. Have one fresh critic audit the reviews against the plan and repository. Its response must end with exactly one verdict line:
+
+   ```text
+   AGREE
+   DISAGREE_EVIDENCE: <repository citation or command result>
+   DISAGREE_CONCERN: <specific unverified objection>
+   ```
+
+   `AGREE` preserves all findings. `DISAGREE_EVIDENCE` may add, revise, or reject findings only as supported by the cited evidence. `DISAGREE_CONCERN` cannot suppress a finding: delegate one concise evidence-resolution pass using the worker-selection rule, then retain only claims grounded in the repository. Do not continue reviewer–critic debate beyond this pass.
+4. Combine duplicate evidence-backed findings. If none remain, accept the plan; otherwise accumulate them for the next planning worker.
 
 ## Deliver
 
