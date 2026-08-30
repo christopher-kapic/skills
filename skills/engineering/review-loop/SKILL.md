@@ -11,7 +11,7 @@ This skill uses only portable Agent Skills metadata and refers to other skills b
 
 ## Inputs
 
-Use user values or these defaults: goal = current conversation (ask only if absent); implementation harness/model = current; review harness/model = current; review parallelism = 1; greenfield = false; test lifecycle = `parallel`; max cycles = unlimited; `propose_improvements` = false.
+Use user values or these defaults: goal = current conversation (ask only if absent); implementation harness/model = current; review harness/model = current; review parallelism = 1; greenfield = false; test lifecycle = `parallel`; max cycles = unlimited; `propose_improvements` = false; `fix_scope` = `root_cause` (alternative: `immediate`).
 
 Treat `greenfield: true` as permission to make breaking changes. Otherwise, preserve compatibility; ask before a breaking change.
 
@@ -37,6 +37,7 @@ Include this brief verbatim in every review worker prompt and in the critic prom
 4. For new tests and macros: would this compile, and would it fail on the defect it claims to catch?
 5. Do not change established observable ordering (authz, error kind) unless `greenfield` is true or the goal says to.
 6. For incremental enforcement mechanisms (ratchets), state what property the mechanism fully closes and what class of violations remains possible. File the remaining class once; do not file an endless series of example bypasses.
+7. Report each finding at its root cause and name the full class or causal chain it belongs to, with code evidence. When one root cause surfaces across several layers or sites, file it once as a root-cause finding, not a series of surface instances.
 
 ## Loop
 
@@ -44,7 +45,7 @@ Keep an accumulated open-finding list with status (open, closed, deferred). Bloc
 
 For each cycle, until no actionable findings remain or `max cycles` is reached:
 
-1. Delegate one implementation pass using the worker-selection rule. Give it the goal, `greenfield`, the open-finding list with status, and only the latest test results. Instruct it to close required open items and not expand the design unless that expansion is a prerequisite for a required item. If a prior cycle's findings showed the implementation did not know all consumers or lock orderings, instruct it to include in its response a short consumer list and the lock/permit acquisition order it relies on, rather than adding new mechanism to compensate.
+1. Delegate one implementation pass using the worker-selection rule. Give it the goal, `greenfield`, `fix_scope`, the open-finding list with status, and only the latest test results. Instruct it to close required open items and not expand the design unless that expansion is a prerequisite for a required item. By default (`fix_scope: root_cause`) instruct it to fix the root cause and full class of each finding, not only the reported instance; when the immediate fix is the root cause, it must say so with a one-line justification. Completing a required finding down to its root cause is not design expansion. When `fix_scope: immediate`, instruct it to fix only the reported instance and record the remaining layers as deferred required items. If a prior cycle's findings showed the implementation did not know all consumers or lock orderings, instruct it to include in its response a short consumer list and the lock/permit acquisition order it relies on, rather than adding new mechanism to compensate.
 2. Capture the git diff. For `before_review`, run relevant tests and wait for results. For `parallel`, start tests without waiting.
 3. While `parallel` tests run or after `before_review` tests finish, delegate `review parallelism` independent review passes to fresh workers using the worker-selection rule. Give each worker the goal, `greenfield`, the diff, any consumer list or acquisition-order table from step 1, relevant project context, available test results, and the reviewer brief verbatim. Ask for actionable correctness, compatibility, security, maintainability, or missing-test issues. Require code evidence (`path:line`, symbol, or test result) for each actionable finding; label anything not yet verifiable as a concern. List out-of-scope suggestions separately. If test lifecycle is `skip`, instruct reviewers to widen to an invariant/consumer audit, not shrink to the diff. When `propose_improvements` is true, also list separately any generalizable skill-instruction improvements that would have enabled an earlier implementation or review worker to avoid the finding; exclude project-specific implementation advice.
 4. Have one fresh critic audit the reviews against the goal, diff, repository, available test results, any consumer list or acquisition-order table, and the reviewer brief. Its response must end with exactly one verdict line:
