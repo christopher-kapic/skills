@@ -13,6 +13,8 @@ This skill uses only portable Agent Skills metadata and refers to other skills b
 
 Use user values or these defaults: goal = current conversation (ask only if absent); planning harness/model = current; review harness/model = current; review parallelism = 1; max cycles = unlimited; output = display; `propose_improvements` = false.
 
+“Unwrap the onion” means plan the root-cause design so extra implementation layers are unnecessary. Always do this.
+
 When `propose_improvements: true`, collect candidate changes to this skill's reusable planning and review instructions that could prevent similar review findings in future delegated runs. Do not collect them when false. These proposals are advisory only; do not modify the skill or repository instructions unless the user separately asks.
 
 ## Clarify decisions
@@ -21,15 +23,17 @@ At any point, if the plan requires user intent, invoke the `user-decision` skill
 
 ## Worker selection
 
-For `current`, use a fresh native subagent when the current harness supports one. Otherwise, invoke a fresh noninteractive process of the current harness through the `invoke-harness` skill. For any named external harness, use `invoke-harness`. Each worker must receive the goal and required context in its initial prompt; do not rely on conversation state shared by a previous worker.
+For `current`, use a fresh native subagent when the current harness supports one. Otherwise, invoke a fresh noninteractive process of the current harness through the `invoke-harness` skill. For any named external harness, use `invoke-harness`. Each worker must receive the goal and required context in its initial prompt; do not rely on conversation state shared by a previous worker. State the worker's role (planner, reviewer, or critic) and that it is performing that pass only. Instruct it not to re-enter this skill, invoke a nested harness, or wait on stdin.
 
 ## Loop
 
+Keep a finding ledger with stable IDs; assign a new ID only to a new class.
+
 For each cycle, until no actionable findings remain or `max cycles` is reached:
 
-1. Delegate one planning pass the goal, relevant user decisions, repository context, current plan, and accumulated findings using the worker-selection rule. Require the worker to inspect the repository and produce a concrete, ordered plan with affected files, key design decisions, compatibility concerns, tests, and validation.
-2. Delegate `review parallelism` independent reviews of the plan to fresh workers using the worker-selection rule. Give each worker the goal, plan, and relevant repository context. Ask it to verify assumptions against the repository and report actionable gaps, sequencing problems, risks, missing tests, and unnecessary scope. Require repository evidence (`path:line`, symbol, or command result) for each actionable finding; label anything not yet verifiable as a concern. List out-of-scope suggestions separately. When `propose_improvements` is true, also list separately any generalizable skill-instruction improvements that would have enabled an earlier planning or review worker to avoid the finding; exclude project-specific implementation advice.
-3. Have one fresh critic audit the reviews against the plan and repository. Its response must end with exactly one verdict line:
+1. Delegate one planning pass the goal, relevant user decisions, repository context, current plan, and finding ledger using the worker-selection rule. Require the worker to inspect the repository and produce a concrete, ordered plan with affected files, key design decisions, compatibility concerns, tests, and validation. Prefer a root-cause design over layered workarounds.
+2. Delegate `review parallelism` independent reviews of the plan to fresh workers using the worker-selection rule. Give each worker the goal, plan, relevant repository context, and finding ledger. Ask it to verify assumptions against the repository and report actionable gaps, sequencing problems, risks, missing tests, and unnecessary scope. Require repository evidence (`path:line`, symbol, or command result) for each actionable finding; label anything not yet verifiable as a concern. Reuse an existing ID when the class matches; otherwise mark a new class. List out-of-scope suggestions separately. When `propose_improvements` is true, also list separately any generalizable skill-instruction improvements that would have enabled an earlier planning or review worker to avoid the finding; exclude project-specific implementation advice.
+3. Have one fresh critic audit the reviews against the plan, repository, and finding ledger. Its response must end with exactly one verdict line:
 
    ```text
    AGREE
@@ -38,7 +42,7 @@ For each cycle, until no actionable findings remain or `max cycles` is reached:
    ```
 
    `AGREE` preserves all findings. `DISAGREE_EVIDENCE` may add, revise, or reject findings only as supported by the cited evidence. `DISAGREE_CONCERN` cannot suppress a finding: delegate one concise evidence-resolution pass using the worker-selection rule, then retain only claims grounded in the repository. Do not continue reviewer–critic debate beyond this pass.
-4. Combine duplicate evidence-backed findings. If none remain, accept the plan; otherwise accumulate them for the next planning worker.
+4. Combine duplicate evidence-backed findings by class in the ledger. If none remain, accept the plan; otherwise pass the ledger to the next planning worker.
 
 ## Deliver
 
