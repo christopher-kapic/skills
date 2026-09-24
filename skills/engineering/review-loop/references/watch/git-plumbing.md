@@ -1,0 +1,12 @@
+# Watch-list: Git plumbing
+
+Attach when the diff invokes git plumbing (`update-ref`, `write-tree`, `mktree`, `ls-tree`, `cat-file`, `hash-object`, `rev-list`), validates trees or refs, or serves repositories.
+
+Probe after the coverage table. Confirm the application's contract first; a mismatch with an entry alone is not a finding. Named APIs are leads, not accepted fixes. `verified` closure needs a probe of the property; report a step you cannot run safely as not run. Report `ID: evidence`, a finding, or `ID: n/a`.
+
+- **GP1 Tree entries as raw bytes.** Are tree names validated as raw bytes? Are duplicates, unsorted entries, empty names, embedded `/`, `.`, `..`, and `.git` (with its case, NTFS, and HFS aliases) rejected, and LFS pointer blobs rejected where content is expected? **Verify:** build malformed fixtures with `git hash-object -t tree --literally -w`, because `mktree` and plain `hash-object` refuse many of these cases. Leads: `git fsck` and `transfer.fsckObjects` apply git's own checks.
+- **GP2 Budgets on walks.** Do recursive `ls-tree -r` walks and range walks charge every entry, and count only objects that are actually new? **Verify:** use a deep tree and a range whose objects already exist.
+- **GP3 Atomic ref updates.** Do ref updates use the old-value form (`update-ref <ref> <new> <old>`)? Does recovery clear a stale `.lock` left by a killed update only after proving that no live git process holds it? **Verify:** SIGKILL during `update-ref`, run recovery, and retry. Also run recovery while another update holds the lock, and expect the lock to survive.
+- **GP4 Durable objects and refs.** Are objects and refs durable (`core.fsync` settings or explicit fsync of files and directories) before the operation is recorded as committed? **Verify:** check the effective configuration and inject a crash after the write.
+- **GP5 One head of truth.** Is the filesystem ref compared with the recorded head, and does no read path fall back to the filesystem in a way that skips state gates? **Verify:** diverge the two and run reads and startup.
+- **GP6 Revisions in argv.** Can a user-supplied revision, ref, or remote be read as an option (for example `--output=<path>`)? Placing it after `--` makes it a pathspec, not a revision. **Verify:** pass `--output=/tmp/x` as the revision and check that no file is created. Leads: `--end-of-options` (git 2.24+) before revisions, or reject values that start with `-`.

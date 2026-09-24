@@ -1,0 +1,12 @@
+# Watch-list: Auth libraries and device flow
+
+Attach when the diff uses an auth library (Better Auth, Auth.js, Lucia, Passport, OAuth or OIDC clients), the OAuth device authorization flow, bootstrap or first-admin logic, or credential and session issuance. Pair it with authz-boundaries, whose AB7 covers the routes a library mounts.
+
+Probe after the coverage table. Confirm the application's contract first; a mismatch with an entry alone is not a finding. Named APIs are leads, not accepted fixes. `verified` closure needs a probe of the property; report a step you cannot run safely as not run. Report `ID: evidence`, a finding, or `ID: n/a`.
+
+- **AL1 Hooks on every write path.** Do library-internal paths (transactions, SSO or OAuth just-in-time signup, admin plugins) call the raw adapter and bypass your wrapped hooks or policy? In Better Auth, check paths through `adapter.transaction` and `runWithTransaction`. **Verify:** trace the call path in the pinned library source. Then exercise just-in-time signup while signup is disabled.
+- **AL2 Policy runs before destruction.** Do admin and plugin operations (remove user, revoke session) run your policy before deleting credentials or data? Which `databaseHooks` fire for them? **Verify:** cite the library source, then run the operation with a rejecting hook and assert that nothing was deleted.
+- **AL3 Library units and fields.** Do fields read from library models have the units and meaning the code assumes? For example, a device code polling interval may be stored in milliseconds. **Verify:** read the library schema or source, and use the library's real default values in fixtures.
+- **AL4 Device-flow binding.** Is the approval bound to the requested client, scope, and device identity? Is the code consumed atomically, and do `authorization_pending` and `slow_down` follow RFC 8628? **Verify:** approve for one identity and redeem for another, run two concurrent redeems, and poll at the documented interval.
+- **AL5 Bootstrap state.** Is first-admin or bootstrap promotion allowed only under a verified bootstrap state, and handled correctly when users exist but the bootstrap record is missing or empty? **Verify:** seed users without the bootstrap record and start the service.
+- **AL6 CSRF on custom calls.** Do custom UI calls to library admin endpoints keep the library's CSRF and origin protection? **Verify:** send a cross-origin POST.
