@@ -2,7 +2,7 @@
 
 Attach when the diff makes server-side requests to user-influenced URLs, including webhooks and fetchers, or touches SSRF guards, DNS pinning, IP allow or deny lists, TLS client configuration, HTTP agents, or client-IP trust (`X-Forwarded-For`).
 
-Probe after the coverage table. Confirm the application's contract first; a mismatch with an entry alone is not a finding. Named APIs are leads, not accepted fixes. `verified` closure needs a probe of the property; report a step you cannot run safely as not run. Report `ID: evidence`, a finding, or `ID: n/a`.
+Apply after coverage enumeration, using the common worker brief's reporting format and the supplied evidence rules.
 
 - **NE1 Parse IP literals as addresses.** Are allow and deny decisions made on parsed addresses rather than on strings, covering expanded and compressed IPv6, IPv4-mapped and IPv4-compatible forms, dotted-quad tails, brackets, zone IDs, decimal, octal, or hex IPv4, and a trailing dot? Does client-IP trust use the same parser? **Verify:** run a table of encodings of loopback and private addresses through the guard.
 - **NE2 Complete special-purpose ranges.** Does the guard deny every address that isn't globally reachable? That means the IANA IPv4 and IPv6 special-purpose registry entries whose Globally Reachable column is False, plus multicast (`224.0.0.0/4`, `ff00::/8`) and deprecated site-local `fec0::/10`, which are outside those registries. For prefixes that embed IPv4 (NAT64 `64:ff9b::/96`, 6to4, IPv4-mapped, IPv4-compatible), is the embedded address decoded and checked again rather than the whole prefix being allowed or blocked? **Verify:** diff the list against the registries' Globally Reachable column, and test embedded-private forms of each prefix.

@@ -2,7 +2,7 @@
 
 Attach when the diff touches SQL, an ORM (Prisma, Drizzle, Kysely, and similar), migrations, transactions, constraints, or deploy-time SQL scripts. Pair this list with the concurrency lists for race classes; this list covers database mechanics.
 
-Probe after the coverage table. Confirm the application's contract first; a mismatch with an entry alone is not a finding. Named APIs are leads, not accepted fixes. `verified` closure needs a probe of the property; report a step you cannot run safely as not run. Report `ID: evidence`, a finding, or `ID: n/a`.
+Apply after coverage enumeration, using the common worker brief's reporting format and the supplied evidence rules.
 
 ## General
 
@@ -11,6 +11,8 @@ Probe after the coverage table. Confirm the application's contract first; a mism
 - **DB3 Read after write.** Does the code act on a separate re-read after a write, where a concurrent writer can change the row in between? **Verify:** find each write followed by a re-read of the same row and construct a concurrent write between them. Leads: `RETURNING` from the conditional write, or a lock that keeps the row stable.
 - **DB4 Foreign-key actions.** Does `RESTRICT` or `NO ACTION` on soft-deleted, historical, or terminal children make parents permanently undeletable, and does the delete path return a domain error rather than a 500? Does `CASCADE` delete history that must survive? **Verify:** delete a parent with each child state present.
 - **DB5 Deploy-time SQL is idempotent and safe for live rows.** Do backfills, hardening scripts, schema replays, and restores re-run on every deploy without duplicate-object errors and without touching live or in-flight rows? Does a reset drop every schema the restore recreates? **Verify:** run the script twice against a database with in-flight rows. Grep non-application files (`*.sql`, shell) for writers of the changed tables.
+- **DB14 Trigger-driven work is inventoried.** Do coverage, lock order, lifecycle, and budget calculations include work caused by triggers, functions, and cascades rather than only explicit queries or foreign-key edges? **Verify:** enumerate the deployed schema's triggers and called routines, trace their effects and locks, then exercise each relevant mutation against the real engine and inspect resulting rows and query/lock evidence.
+- **DB15 Success describes the committed effect.** Is a success marker or receipt recorded atomically with the state it describes, using the rows/versions actually changed by that transaction rather than a later re-read that might observe a successor? **Verify:** race a replacement write and inject rollback/crash between mutation and marker. Assert that no marker claims an uncommitted or different actor's result, and that retries recover the actual committed outcome.
 
 ## PostgreSQL
 

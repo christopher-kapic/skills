@@ -2,7 +2,7 @@
 
 Attach when the diff invokes git plumbing (`update-ref`, `write-tree`, `mktree`, `ls-tree`, `cat-file`, `hash-object`, `rev-list`), validates trees or refs, or serves repositories.
 
-Probe after the coverage table. Confirm the application's contract first; a mismatch with an entry alone is not a finding. Named APIs are leads, not accepted fixes. `verified` closure needs a probe of the property; report a step you cannot run safely as not run. Report `ID: evidence`, a finding, or `ID: n/a`.
+Apply after coverage enumeration, using the common worker brief's reporting format and the supplied evidence rules.
 
 - **GP1 Tree entries as raw bytes.** Are tree names validated as raw bytes? Are duplicates, unsorted entries, empty names, embedded `/`, `.`, `..`, and `.git` (with its case, NTFS, and HFS aliases) rejected, and LFS pointer blobs rejected where content is expected? **Verify:** build malformed fixtures with `git hash-object -t tree --literally -w`, because `mktree` and plain `hash-object` refuse many of these cases. Leads: `git fsck` and `transfer.fsckObjects` apply git's own checks.
 - **GP2 Budgets on walks.** Do recursive `ls-tree -r` walks and range walks charge every entry, and count only objects that are actually new? **Verify:** use a deep tree and a range whose objects already exist.

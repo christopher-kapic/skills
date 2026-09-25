@@ -2,7 +2,7 @@
 
 Attach when the diff touches JavaScript or TypeScript runtime code. Pair it with the class lists; this list covers language and runtime traps.
 
-Probe after the coverage table. Confirm the application's contract first; a mismatch with an entry alone is not a finding. Named APIs are leads, not accepted fixes. `verified` closure needs a probe of the property; report a step you cannot run safely as not run. Report `ID: evidence`, a finding, or `ID: n/a`.
+Apply after coverage enumeration, using the common worker brief's reporting format and the supplied evidence rules.
 
 - **JS1 String length units.** `.length`, `slice`, and Zod `.min`/`.max` count UTF-16 code units. JSON Schema `minLength`/`maxLength` count code points. Byte limits need `Buffer.byteLength` or `TextEncoder`. Does each limit use the unit the spec names? **Verify:** test at the boundary with astral and multi-byte characters.
 - **JS2 Case, collation, and trim.** `toLowerCase()` is not case folding. `<` and `localeCompare` are not database collation. `trim()` strips NBSP and BOM. Do identity keys and sort keys avoid all three? **Verify:** search for these calls on identity or sort keys and test NBSP, BOM, and multi-character folds.

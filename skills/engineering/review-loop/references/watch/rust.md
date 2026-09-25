@@ -2,7 +2,9 @@
 
 Attach when the diff touches Rust code, especially cross-platform crates, `#[cfg]` gating, async runtimes (Tokio), or filesystem and process code. Pair it with the class lists; this list covers language and toolchain traps.
 
-Probe after the coverage table. Confirm the application's contract first; a mismatch with an entry alone is not a finding. Named APIs are leads, not accepted fixes. `verified` closure needs a probe of the property; report a step you cannot run safely as not run. Report `ID: evidence`, a finding, or `ID: n/a`.
+For signal waits, also attach unix-processes and apply UP15 through the actual Rust wrapper on each supported OS.
+
+Apply after coverage enumeration, using the common worker brief's reporting format and the supplied evidence rules.
 
 - **RS1 `cfg` placement matches across items.** Is a `#[cfg]` on a type, trait, or module matched on its impls, functions, imports, and callers, and the reverse? **Verify:** build or `cargo check` for every supported target (for example Linux, macOS, another Unix such as FreeBSD, and Windows), for both the library and `--tests`. Where toolchains are unavailable, walk each gated item's uses by hand and label the result unverified.
 - **RS2 Test code on secondary targets.** Do `#[cfg(test)]` helpers used only by Unix-only test modules become dead code on Windows `--tests` builds, failing `clippy -D warnings`? Do tests `unwrap` a result that is `Unsupported` on some platforms? **Verify:** run `cargo clippy --tests -- -D warnings` per target, and check each test's platform gate against the function's.

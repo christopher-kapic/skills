@@ -2,7 +2,7 @@
 
 Attach when the diff has effects that must survive a crash: file or object writes, fsync, external API side effects, outboxes, publish or commit protocols, recovery, reconcile, or garbage collection.
 
-Probe after the coverage table. Confirm the application's contract first; a mismatch with an entry alone is not a finding. Named APIs are leads, not accepted fixes. `verified` closure needs a probe of the property; report a step you cannot run safely as not run. Report `ID: evidence`, a finding, or `ID: n/a`.
+Apply after coverage enumeration, using the common worker brief's reporting format and the supplied evidence rules.
 
 - **DR1 Durable intent before effect.** Before each external effect (publish, provider call, send, ref update, spawn), is an intent record durable that lets recovery find and settle the effect? **Verify:** for each effect, name its intent record. Simulate a crash between intent and effect, and between effect and completion, then run recovery.
 - **DR2 Validate before durable write.** Is input validated and charged before anything durable is written, so that a rejection leaves no orphaned, uncharged, or promoted artifact? **Verify:** submit input that fails the last validation step, then list what remains in each store.

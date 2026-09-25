@@ -2,7 +2,7 @@
 
 Attach when the diff composes, parses, forwards, exports, or redacts email, MIME, SMTP, or address headers.
 
-Probe after the coverage table. Confirm the application's contract first; a mismatch with an entry alone is not a finding. Named APIs are leads, not accepted fixes. `verified` closure needs a probe of the property; report a step you cannot run safely as not run. Report `ID: evidence`, a finding, or `ID: n/a`.
+Apply after coverage enumeration, using the common worker brief's reporting format and the supplied evidence rules.
 
 - **EM1 Address rendering.** Are display names quoted per RFC 5322, with `"` and `\` escaped, quoting whenever specials such as `<`, `,`, or `;` appear, and controls rejected? Is non-ASCII encoded without placing RFC 2047 encoded-words inside a quoted string, which RFC 2047 §5 forbids? **Verify:** render `a <x@evil.example>`, `a\`, `a"b`, and `Zoë, <x>` with no quotes, then parse the header back and compare the display name and addr-spec. Lead: RFC 6532 for UTF-8 headers.
 - **EM2 Line limits.** Are lines at most 998 octets, including folded headers and long address lists? **Verify:** render 200 recipients and measure the longest line.
