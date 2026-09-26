@@ -25,6 +25,8 @@ At any point, if the plan requires user intent, invoke the `user-decision` skill
 
 For `current`, use a fresh native subagent when the current harness supports one. Otherwise, invoke a fresh noninteractive process of the current harness through the `invoke-harness` skill. For any named external harness, use `invoke-harness`. Each worker must receive the goal and required context in its initial prompt; do not rely on conversation state shared by a previous worker. State the worker's role (planner, reviewer, or critic) and that it is performing that pass only. Instruct it not to re-enter this skill, invoke a nested harness, or wait on stdin.
 
+When repository context spans many files, assemble it with the `explore-offload` skill, stating the planning goal and tagging each reviewer's focus. Give each reviewer the render for its focus, and the planner and critic the full render; refresh them when the plan's touched surface changes. In each cycle, one reviewer works without a bundle, so a scout omission cannot blind every reviewer.
+
 Scale review effort to the affected surface and uncertainty, honoring user settings; use reasoning controls only if supported. With multiple reviewers, assign complementary focuses (design correctness; affected consumers and lifecycle paths), while all check the claimed invariants. Require explicit completion, coverage evidence, and findings or an explicit clean result for reviews. Empty, interrupted, or malformed output is an invalid pass: inspect any partial artifacts, retry once with a fresh worker, then stop as incomplete if still invalid.
 
 ## Plan and coverage contract

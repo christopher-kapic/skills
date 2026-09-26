@@ -1,0 +1,4 @@
+interface:
+  display_name: "Explore Offload"
+  short_description: "Cheap scout gathers context for costly workers"
+  default_prompt: "Use $explore-offload to gather the repository context for this task with a cheap scout model."
