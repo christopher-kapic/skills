@@ -13,6 +13,6 @@ OPENCODE_CONFIG=<all-permissions-config> opencode run --dir <dir> -m <provider/m
 - **Permissions:** Use a trusted config that allows every tool and has no `ask` or `deny` rules.
 - **Sandbox:** No OS sandbox flag is documented; do not add outer sandboxing.
 
-Defaults are permissive for most tools; external-directory and loop detection default to ask. Do not run unattended with only those defaults. In a noninteractive run, ask rules can block progress. Deny edits, shell commands, network tools, and external paths that the task does not need. If the installed release has no usable unattended permission mode, run it in an outer sandbox with a policy that supplies the required isolation or reject that harness for the task.
+Defaults are permissive for most tools; external-directory and loop detection default to ask. Supply and verify a trusted all-permissions config for unattended work. If the installed release cannot run with all permissions bypassed, reject OpenCode for this invocation.
 
 Sources: https://opencode.ai/docs/cli/ and https://opencode.ai/docs/permissions/

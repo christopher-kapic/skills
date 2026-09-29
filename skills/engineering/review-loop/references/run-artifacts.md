@@ -1,61 +1,109 @@
 # Run artifacts and evidence
 
-Keep reports, snapshots, and new review memory in a task-specific artifact location outside the repository by default. Use an in-repo location only when already authorized by the user or project instructions. Do not create a tracking system or publish issues merely to satisfy this format. Sections of one report are sufficient when they remain addressable; for text-only workers, the coordinator preserves returned reports.
+Keep reports, snapshots, and new review memory in a task-specific location outside the repository unless an in-repo location is already authorized. Addressable report sections suffice; the coordinator preserves text-only workers' reports. This format requires neither a tracking system nor published issues.
+
+## Optional plan handoff
+
+Treat a supplied reviewed plan from ck-plan or any source as task data, without requiring its producer, layout, or schema. Extract available fields:
+
+| Field | Contents |
+|---|---|
+| Provenance and baseline | Author, reviewed revision, exact dirty and untracked inputs |
+| Goal and authority | Acceptance criteria, decisions, assumptions, authority, compatibility and scope limits |
+| Inventory and steps | Invariants, consumers, siblings, dependency bounds, ordered steps |
+| Validation | Commands and expected outcomes; proposed checks versus executed evidence with provenance |
+| Review status | Scope, verdict, unresolved findings, coverage gaps, remaining decisions |
+
+Check provenance, current goal and authority, and source or dependency drift. Mark each portion reused, refreshed, or missing with reasons; derive stale or missing inputs locally. Unknown provenance establishes neither execution nor authority. Plan review replaces neither code review nor current validation and grants no additional permission.
 
 ## Decisions, ledger, and assignments
 
-- Decisions: `behavior / constraint | decision or assumption | authority | acceptance check`. Feed the same decisions to workers and update them when user intent changes.
-- Findings: `ID | invariant / class | canonical surface tags | severity | required? | open / closed / deferred | evidence / revision`. In-scope blockers and code validation failures stay required until independently closed or explicitly deferred. Preserve IDs and original external severity labels. Record who authorized a deferral, why, and the remaining risk; severity is unchanged.
-- Trust-boundary fields: `exploitable: yes/no (or unverified); by whom; path and preconditions; impact; evidence`. A “no” needs its rationale. Missing assessment is an evidence gap.
-- Assignments: `reviewer | focus | matched watch-lists | snapshot | complete / pending / invalid`. Extra assignments remain within configured concurrency and total budgets. A critic's possession of a list is not reviewer coverage. Carried-forward evidence requires unchanged inputs and unaffected dependencies.
+- Decisions: `behavior or constraint | decision or assumption | authority | acceptance check`. Update workers when intent changes.
+- Findings: `ID | invariant and class | canonical surface tags | severity | required? | disposition | evidence and revision`. In-scope blockers and code validation failures remain required until independently closed or explicitly deferred. Preserve IDs and original external severity labels; record deferral authority, reason, and remaining risk without reducing severity.
+- Trust-boundary fields: `exploitable: yes/no/unverified | actor | path and preconditions | impact | evidence`. Justify “no”; missing assessment is an evidence gap.
+- Assignments: `reviewer | focus | matched watch-lists and cited lines | snapshot | complete/pending/invalid`. Record dropped surface rows with reasons. Keep assignments within concurrency and total budgets; critic possession is not reviewer coverage.
+
+Carry inventory, trace, or coverage rows only after a reviewer compares their full dependency bound with the fix-pass diff: sites through outermost observers and relevant tests, configuration, dependencies, environment, and mutable fixtures. Record source snapshot, checked paths, comparison evidence, and assessment. Changed or unknown inputs invalidate the row: re-enumerate or report a gap. Final security enumeration starts fresh.
 
 ## Evidence states
 
-The coordinator supplies this section to every worker. Coverage rows use `site / operation | obligation | evidence state | proof or missing evidence | revision`, with inventory bounds alongside them:
+Supply these definitions to workers making claims. Record coverage as `site and operation | obligation | evidence state | proof/check ID or missing evidence | revision | assessor`, with inventory bounds:
 
-- `holds (executed)`: the reporting reviewer ran a discriminating test/probe against the actual boundary. Give the command, observed result, and why it could fail on a violation. One execution can cover several rows when its assertions establish each. Cached output, inherited logs, or a mock replacing that boundary cannot establish this state.
-- `holds (structural)`: the reviewer independently proves the claim from cited code and an exhaustive bound. State the proposition, all relevant sites, assumptions, enforcement mechanism, and why no bypass exists. Examples include an exhaustive match, a type-enforced constraint with no unchecked escape, or a complete single-call-site inventory. “Looks correct” and repeating an implementer's argument are insufficient. This is a valid completion state for obligations fully established by that proof.
-- `reviewed`: an inherently static obligation, such as documentation consistency, checked with citations and reasoning. This does not certify runtime behavior.
+- `holds (executed)`: the worker personally ran a discriminating check against the actual boundary. Cite the execution record and explain which assertions detect each covered violation. Cached output, inherited logs, and mocks replacing that boundary cannot establish this state. Implementer execution still needs independent assessment for closure.
+- `holds (assessed execution)`: a reviewer validated a named record under **Execution and reuse**. Cite the assessment and original executor. This closes ordinary obligations, never specifically required fresh probes, isolated replay, or final security review.
+- `holds (structural)`: an independently derived proof with cited code, proposition, exhaustive site bound, assumptions, enforcement mechanism, and absence of bypass. It completes only obligations fully established by that proof; repeating an implementer's argument is insufficient.
+- `reviewed`: an inherently static obligation checked with citations and reasoning; no runtime certification.
 - `violates`: code or executed evidence demonstrates a defect; link its finding.
-- `unverified`: required evidence or a bound is missing; state what would resolve it.
-- `n/a`: a contract-based explanation shows the check is inapplicable.
+- `unverified`: required evidence or a bound is missing; state the resolution needed.
+- `n/a`: the contract establishes inapplicability.
 
-Timing, concurrent effects, authorization, lifecycle/cancellation, and I/O behavior require execution against the boundary that owns the behavior. Structural evidence can prove a narrower property, such as a lock acquisition graph, but does not establish runtime mutual exclusion, absence of hidden acquisitions, or safe cancellation by itself. Split those obligations instead of using a structural label to waive behavioral checks. Asserted build/type-check success also needs actual check results; a type-based argument is not evidence that a compiler ran.
+Timing, concurrent effects, authorization, lifecycle, cancellation, and I/O require execution at the owning boundary. Split narrower structural claims from runtime obligations: a lock graph alone proves neither runtime exclusion, absence of hidden acquisitions, nor safe cancellation. Build and type-check success require actual execution records.
 
-Closure records use the same evidence states; avoid bare `holds` or `verified` that hides the proof kind. Reviewers re-derive structural evidence and run required behavioral probes themselves. Source-backed defects do not need a successful exploit demonstration to remain open. Missing infrastructure is an evidence gap rather than automatically a code bug, but missing required execution still prevents readiness. Do not manufacture token probes or historical regressions for structurally proven or purely static changes.
+Use these states for closure, avoiding bare `holds` or `verified`. Inherited verdicts cannot close findings. Source-backed defects remain open without a successful exploit demonstration. Missing infrastructure is an evidence gap, not automatically a code bug; missing required execution prevents readiness. Purely static changes need no invented runtime test or historical regression.
 
-Validate report content, whether returned as text or written to a file: scope/revision, assigned coverage, incremental coverage in incremental rounds, appropriate proofs/results, explicit findings/verdict, and completion. File absence alone is not invalid when a complete returned report is available. A skeleton, truncated/empty response, or exit status alone is insufficient. Return unsupported evidence claims for correction under the skill's bounded retry rule. Honest unverified coverage remains a gap; it is not a pass. Liveness guidance does not override a complete report's validity.
+Validate reports for scope and revision, assigned and incremental coverage, appropriate evidence, explicit findings or verdict, and completion. Complete returned text suffices without a report file. Skeletons, truncated or empty responses, and exit status alone do not. Return unsupported claims under the skill's bounded retry rule; honest unverified coverage remains a gap. Liveness guidelines do not invalidate a complete report.
+
+## Execution and reuse
+
+Assign one runner per selected check and share its record. Each record identifies:
+
+- Check ID; relevant source, tests, configuration, and transitive dependencies in an exact snapshot including dirty and untracked files.
+- Environment ID covering tool and dependency versions, settings, and mutable fixture state; refresh it when inputs change.
+- Actual command, working directory, selectors, selected counts (`n/a` for non-tests), exit status, observed assertions, raw log, executor, execution time, and cache origin.
+
+A commit ID cannot identify a dirty tree; filtered scout output cannot replace raw logs. Before reuse, a reviewer checks assertion discrimination, production-path reachability, actual boundary, provenance, and unchanged inputs across that entire scope. Record the comparison, bound, and assessment by check ID. Changed or unknown inputs, missing selectors or counts, ambiguous cache origin, or weak assertions require rerun, stronger evidence, or `unverified`. Label valid reuse `holds (assessed execution)` with original executor and time.
+
+Each substantive cycle with an execution-dependent obligation requires one qualified reviewer to choose and personally run a bounded discriminating probe of the riskiest such obligation at its actual boundary. Purely static or fully proved obligations need none. Other checks may reuse assessed execution unless freshness is required. Bypass task-result caches for all new-execution claims. Preserve security or reopened behavioral replay and final security probes; unavailable required execution stays `unverified`.
+
+## Critic policy
+
+Under `critic: auto`, require a fresh critic for:
+
+- A current open blocker or major, or proposed closure of one.
+- An implementer or reviewer dispute over a named finding at any severity, including disagreement with its severity rating.
+- Reviewer-requested adjudication.
+- Security-sensitive work.
+- A reopened finding.
+- Conflicting reports.
+- Reviewer-reported unbounded uncertainty.
+- A supplied plan author's dispute when a plan is supplied.
+
+Workers name triggers and finding or coverage IDs; route from those reports without replacing substantive judgment or lowering severity. Old independently closed findings alone do not trigger. `critic: always` requires each cycle. After review and late check results, record `mode | trigger and IDs or omission rationale | assigned critic and status`.
+
+Supply goal and authority, trigger, snapshot, relevant diffs and decisions, severity index, disputed reports and check records, relevant list entries, and artifact index. Assemble briefs through [worker-briefs.md](worker-briefs.md); `always` without a dispute targets the riskiest evidence and closures.
+
+Apply the critic brief's verdict semantics. For `DISAGREE_CONCERN`, delegate one concise evidence-resolution pass, retain grounded claims and unresolved gaps, then end debate. Acceptance requires a valid required critic; omission needs the recorded auto rationale. A critic cannot supply a missing assigned review.
 
 ## Project memory and severe carry-ins
 
-Read existing project review memory when available. Store new recurring classes and carry-ins with durable external run artifacts by default; link the location in the final report. Creating or updating an in-repo memory file is opt-in, with existing user/project authorization sufficient. Do not ask merely to choose the external default, or silently modify repository guidance. If no durable external location is available, include the entries in the final report and state that cross-run storage was not established.
+Read existing project review memory and feed relevant entries to workers. Store new entries with durable external artifacts and link the location in the final report. In-repo memory requires existing user or project authorization; choosing the external default needs no question. If durable storage is unavailable, include entries in the final report and disclose that cross-run storage was not established.
 
-Record `class ID | invariant / failure pattern | surface tags | affected area | evidence | prevention / probe | status`. Feed relevant entries to workers. Add only classes supported by actual findings; the watch-lists provide general patterns, and memory records where they occurred in this project.
+Record recurring classes as `class ID | invariant and failure pattern | surface tags | affected area | evidence | prevention or probe | status`. Include only observed findings; watch-lists supply general patterns.
 
-For a severe out-of-scope finding, retain `finding ID | severity / evidence | affected area | next-touch reassessment | suggested action | destination / status`. Before a pass touches that area, reassess it against the current goal and changed invariants. Import it as required only if it now breaks that goal/invariant or the user has explicitly included it. Otherwise keep it visible as unresolved out-of-scope work without blocking, expanding the task, or requesting the same scope decision again. Reuse recorded scope decisions; ask about expansion only when necessary to fulfill the goal and not already settled. Close carry-ins with independent evidence. Routing them to external artifacts does not authorize sending messages or creating tickets.
+For severe out-of-scope findings retain `finding ID | severity and evidence | affected area | next-touch reassessment | suggested action | destination and status`. Reassess before touching that area; import as required only when it breaks the current goal or changed invariant, or the user includes it. Otherwise retain it visibly without blocking or expanding scope. Reuse settled scope decisions; ask about expansion only when necessary to fulfill the goal. Close carry-ins with independent evidence. Storage authorizes neither messages nor tickets.
 
 ## Snapshots and fix verification
 
-Before each implementation/fix worker, make a recoverable copy of the tracked and untracked files needed by the task, preserving existing edits. An ordinary archive/copy that preserves file types, modes, and symlink targets is sufficient; a custom hash manifest or launch script is not required. Record the copied scope, baseline revision, and git status. Keep snapshots outside the repository, preserve staged/unstaged state, and do not use stash, checkout, reset, or index mutations to create them. A plain `git diff` misses untracked files. Use `git --no-optional-locks` for read-only inspection. Reuse repository snapshot tooling if available.
+Before each implementation pass, copy the task's tracked and untracked files recoverably outside the repository, preserving edits, file types, modes, and symlink targets. Record copied scope, baseline revision, and git status. Preserve staged and unstaged state; use no stash, checkout, reset, or index mutations. Use `git --no-optional-locks` for inspection. Reuse repository snapshot tooling; an ordinary archive suffices without custom infrastructure.
 
-After a pass, capture the full task diff from the starting tree and the incremental diff from the pre-fix copy, including additions/deletions. The starting tree may differ from `HEAD` in a dirty repository. Keep unrelated user edits distinguishable and inspect unexpected git-state changes; never restore blindly over newer work.
+Capture full task and incremental diffs against the starting tree and pre-fix copy, including additions and deletions. A dirty starting tree differs from `HEAD`; plain `git diff` omits untracked files. Distinguish unrelated edits, inspect unexpected git-state changes, and never restore over newer work blindly.
 
-For ordinary fixes, confirm cited tests exist and selectors run them, execute relevant regression checks, and record the command, context, result, and discriminating assertion. Historical before/after runs and saved replay artifacts are optional; targeted scratch mutations in matched watch-lists, such as TA2 and TA9, remain the default checks for test discrimination. Those use a disposable copy without the full replay protocol. Structural and static obligations use their corresponding proof rules. Do not claim a historical failure unless observed.
+For ordinary fixes apply **Execution and reuse** and matched TA2/TA9 mutation conditions. Historical runs and saved replay artifacts are otherwise optional; never claim an unobserved historical failure.
 
-For **security-sensitive or reopened behavioral findings**, require a replayable proof:
+For **security-sensitive or reopened behavioral findings**, require replayable proof:
 
-1. In isolation, show the regression test fails for the intended defect on the pre-fix implementation and passes on the candidate. If the old revision cannot run the test, use a focused fault patch as the failure demonstration and record that historical reproduction was unavailable. Setup or dependency failures do not count.
-2. Save a `.patch` beside the report that reintroduces the defect into the candidate, referenced by finding ID. Record candidate identity, patch direction/application/reversal commands, test selector, and expected failing assertion. Keep new regression tests in the candidate snapshot, not in the deliberate break.
-3. The coordinator or verifier replays it in a fresh isolated copy: check the base, apply the patch, observe the intended failure, reverse it, confirm the source tree matches the base byte-for-byte including file types/modes/symlink targets and additions/deletions, and confirm the restored test passes. Keep declared build/output paths outside that comparison; unexpected source changes fail restoration.
+1. In isolation, show the regression test fails for the intended defect before the fix and passes on the candidate. When the old revision cannot run it, demonstrate failure with a focused fault patch and disclose unavailable historical reproduction. Setup or dependency failures do not count.
+2. Save a finding-ID `.patch` beside the report that reintroduces the defect into the candidate. Record candidate identity, patch direction, application and reversal commands, selector, and expected failing assertion. Keep regression tests in the candidate, outside the deliberate break.
+3. The coordinator or verifier replays in a fresh isolated copy: check base, apply patch, observe intended failure, reverse patch, confirm byte-identical source including file types, modes, symlink targets, additions and deletions, then confirm the restored test passes. Exclude declared build outputs from comparison; unexpected source changes fail restoration.
 
-Bypass task-result caches for executions claimed as new evidence. Never apply deliberate breaks to the live reviewed tree. When optional replay is used, follow the same isolation/restoration safeguards. A missing mandatory proof stays unverified; ordinary fixes do not become unverified merely because optional replay was omitted. Replaying an implementer proof does not replace the reviewer's independent assessment of the boundary and inverse failure. Use existing automation when available, otherwise record explicit commands; no specific test runner or harness procedure is assumed.
+Apply deliberate breaks only in isolation, including optional replay. Missing mandatory proof stays unverified. Replay does not replace independent boundary and inverse-failure assessment. Use existing automation or record explicit commands; no particular runner is required.
 
 ## Final security review
 
-After incremental rounds pass, review the whole security-sensitive candidate in fresh contexts. Supply the goal, settings, common + reviewer briefs, **Evidence states**, decisions, baseline, full diff/tree, matched watch-lists, and relevant project memory. Withhold this run's verdicts, closure assertions, and fix narratives until independent enumeration and probes finish; this phase starts a new inventory rather than inheriting fix-pass coverage.
+After incremental rounds pass, review the whole security-sensitive candidate in fresh contexts. Supply goal, settings, applicable briefs and evidence procedures, decisions, baseline, full diff and tree, matched lists, and relevant project memory. Withhold this run's verdicts, closures, and fix narratives until fresh enumeration and fresh, independently chosen boundary probes finish; carried coverage and earlier execution cannot replace them.
 
-Keep assignments within the four-list cap, configured parallelism, and total budgets. Review the committed tree if committing was authorized, otherwise the frozen candidate; this step grants no commit permission. Reconcile results with the ledger and critic under the normal gates. New required findings or evidence gaps return to the loop within its limits. Any subsequent edit needs renewed review/validation of its effects and renewed final security review.
+Honor the four-list cap, parallelism, and budgets. Review the authorized committed tree or frozen candidate; this step grants no commit permission. Reconcile with the ledger and required fresh critic under normal gates. New required findings or gaps return to the bounded loop. Subsequent edits require renewed review and validation of their effects and renewed final security review.
 
 ## Effort and stop record
 
-Where measurements are available, record `pass | role / model | elapsed | complete / invalid / redone / escalated | reason | snapshot`. Distinguish summed reviewer time from elapsed wall time when workers overlap. Track redone fixes and escalations as well as findings; mark unavailable timing as unknown, not zero. Respect cycle, invalid-pass, no-progress, and user resource limits. An incomplete stop preserves findings, gaps, and next actions without implying approval.
+Apply [review-loop's run-budget and stop rules](../SKILL.md#worker-selection-and-operation). Record allowances, hard caps, and justified extensions; where observable, record `pass | role, harness, actual model, reasoning, capability basis | elapsed and usage | status | reason | snapshot | checks run or reused | new independently confirmed findings`. Distinguish worker time from wall time and unknown usage from zero. An incomplete stop preserves findings, gaps, and next actions without implying approval.

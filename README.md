@@ -8,10 +8,10 @@ Every skill follows the portable Agent Skills format: a directory containing a `
 
 | Skill | What it does | Triggers |
 |---|---|---|
-| [review-loop](skills/engineering/review-loop/SKILL.md) | Implements a change through implement → test → independent review → fix cycles. The main agent coordinates; fresh workers do every pass. Includes surface-specific watch-lists and a critic step that adjudicates findings. | "review this until it's ready", "harden this", "iterate on this" |
-| [ck-plan](skills/engineering/ck-plan/SKILL.md) | Produces a repository-grounded implementation plan through plan → review → revise cycles, with a required coverage contract and a critic verdict. | "plan this feature", "write a reviewed plan", "refine the approach" |
-| [explore-offload](skills/engineering/explore-offload/SKILL.md) | Has a cheap scout model write a manifest of relevant code ranges and test-log filters, tagged by focus; renders a line-numbered bundle per focus so expensive workers start from it instead of exploring. Used by ck-plan and review-loop. | "gather context cheaply", "offload exploration" |
-| [invoke-harness](skills/external-harness/invoke-harness/SKILL.md) | Runs an external coding agent (Codex, Claude Code, Grok, OpenCode, Cursor CLI, GitHub Copilot CLI, Cockpit) as a bounded noninteractive child process with an explicit model, directory, prompt, and permission mode. One reference file per harness holds the verified flags. | "run this through Codex", "delegate to Claude Code", "review loop with Grok" |
+| [review-loop](skills/engineering/review-loop/SKILL.md) | Implements, tests, independently reviews, and fixes a code change through bounded cycles. Runs alone or uses a prior plan as optional input. | "review this until it's ready", "harden this", "iterate on this" |
+| [ck-plan](skills/engineering/ck-plan/SKILL.md) | Produces an ordered, repository-grounded implementation plan through independent drafting and review. Runs alone; its plan can optionally inform implementation. | "plan this feature", "write a reviewed plan", "refine the approach" |
+| [explore-offload](skills/engineering/explore-offload/SKILL.md) | Uses a cheap scout to select code and test-log ranges into a manifest, then renders line-numbered bundles for each worker's focus. | "gather context cheaply", "offload exploration" |
+| [invoke-harness](skills/external-harness/invoke-harness/SKILL.md) | Runs Codex, Claude Code, Grok, OpenCode, Cursor CLI, GitHub Copilot CLI, or Cockpit as a bounded noninteractive worker with an explicit model and scope. | "run this through Codex", "delegate to Claude Code", "review loop with Grok" |
 | [user-decision](skills/communication/user-decision/SKILL.md) | Reduces choice-heavy output to a short, ranked decision queue instead of a wall of options. | "what do I need to decide?", "simplify this", "give me options" |
 
 ## Repository layout

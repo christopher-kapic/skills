@@ -5,49 +5,58 @@ description: Create a repository-grounded implementation plan through delegated 
 
 # CK Plan
 
-Build a solid implementation plan through fresh plan → review → revise passes. The main agent only coordinates and delivers the result; delegate every planning and review pass to a fresh worker. Do not implement the feature.
-
-This skill uses only portable Agent Skills metadata and refers to other skills by name in plain language. Do not assume that `$name` or `/name` invocation syntax works in every harness.
+Coordinate fresh worker plan → review → revise passes. Deliver a repository-grounded plan without implementing it; later implementers or review-loop may use it as optional input.
 
 ## Inputs
 
-Use user values or these defaults: goal = current conversation (ask only if absent); planning harness/model = current; review harness/model = current; review parallelism = 1; max cycles = unlimited; output = display; `propose_improvements` = false.
+Use user values or defaults: goal = current conversation (ask if absent); planning and review harness = current; model = select by role; review parallelism = 1; `critic: auto`; max cycles = unlimited within the run budget; output = display; `propose_improvements` = false. `critic: always` requires a fresh critic each cycle.
 
-“Unwrap the onion” means plan the root-cause design so extra implementation layers are unnecessary. Always do this.
+Before launch, record a finite elapsed wall-time allowance, starting at 60 minutes and adjusted to scope. Fit finite pass limits, scouts, revisions, reviews, critics, retries, validation, and reporting inside it. Honor user hard caps; limit tokens only with observable usage. Before a self-estimated allowance expires, permit a recorded finite extension citing concrete progress and remaining work. Never extend user caps or reset no-progress limits. Choose routine budgets autonomously; exhaustion ends incomplete with gaps and next actions.
 
-When `propose_improvements: true`, collect candidate changes to this skill's reusable planning and review instructions that could prevent similar review findings in future delegated runs. Do not collect them when false. These proposals are advisory only; do not modify the skill or repository instructions unless the user separately asks.
+Always plan the root-cause design so extra layers are unnecessary (“unwrap the onion”). With `propose_improvements: true`, collect advisory reusable instruction changes; modify skills only when separately asked.
 
 ## Clarify decisions
 
-At any point, if the plan requires user intent, invoke the `user-decision` skill before continuing. If the user explicitly or implicitly requests noninteractive work, choose each best long-term option without asking. Use quick options only when the user requests them for the entire planning task.
+When user intent is needed, invoke user-decision before continuing. For explicitly or implicitly noninteractive work, choose the best long-term options. Use quick options only when requested for the entire task.
 
 ## Worker selection
 
-For `current`, use a fresh native subagent when the current harness supports one. Otherwise, invoke a fresh noninteractive process of the current harness through the `invoke-harness` skill. For any named external harness, use `invoke-harness`. Each worker must receive the goal and required context in its initial prompt; do not rely on conversation state shared by a previous worker. State the worker's role (planner, reviewer, or critic) and that it is performing that pass only. Instruct it not to re-enter this skill, invoke a nested harness, or wait on stdin.
+Use fresh native subagents for `current` when supported, otherwise invoke-harness; use invoke-harness for named external harnesses. Supply each worker goal, role, focus, decisions, context, artifact index, output destination, and limits. Require one pass without re-entering this skill, nesting a harness, or waiting on stdin.
 
-When repository context spans many files, assemble it with the `explore-offload` skill, stating the planning goal and tagging each reviewer's focus. Give each reviewer the render for its focus, and the planner and critic the full render; refresh them when the plan's touched surface changes. In each cycle, one reviewer works without a bundle, so a scout omission cannot blind every reviewer.
+Honor user model choices. Otherwise choose the cheapest qualified model: lower-cost models for scouts, mechanical revisions, and settled plans; strong reasoning for uncertain root-cause design, security, authorization, concurrency, durability, and disputed evidence. Each substantive cycle needs one independently capable reviewer exploring the repository without a scout bundle. Apply routing to native and external workers. Record actual model ID, harness, supported reasoning setting, and capability basis; confirm external IDs through invoke-harness. Vendor and price alone do not establish capability. Diagnose reasoning, context, tooling, or evidence failures before escalating stalled cheap passes within user settings.
 
-Scale review effort to the affected surface and uncertainty, honoring user settings; use reasoning controls only if supported. With multiple reviewers, assign complementary focuses (design correctness; affected consumers and lifecycle paths), while all check the claimed invariants. Require explicit completion, coverage evidence, and findings or an explicit clean result for reviews. Empty, interrupted, or malformed output is an invalid pass: inspect any partial artifacts, retry once with a fresh worker, then stop as incomplete if still invalid.
+Use explore-offload when repeated exploration costs exceed scout and rendering work; pass small known files directly. Give workers only their focus context, artifact index, and permission to read more; refresh stale bundles. Record observable scout and consumer time, token costs, and context additions; otherwise `unknown`.
+
+Scale reviews to surface and uncertainty within user settings, assigning complementary design, consumer, and lifecycle focuses. All reviewers check invariants and report completion, coverage evidence, and findings or explicit clean result. For empty, interrupted, or malformed passes, inspect partial artifacts, retry once with a fresh worker, then stop incomplete if still invalid.
 
 ## Plan and coverage contract
 
-Give planners and reviewers this contract; planners produce the artifacts, reviewers verify them:
+Supply this contract to planners, reviewers, and critics: planners produce artifacts, reviewers verify them, and critics adjudicate triggers.
 
-- Produce an ordered plan with affected files, design decisions, compatibility concerns, tests, and validation. For each changed invariant, identify its enforcement point and how affected paths reach it; checks or warnings suffice only if they prevent the prohibited behavior.
-- Maintain a compact table: `affected site / operation | planned change | verification`. Include consumers, siblings, and failure/lifecycle paths where relevant. Support completeness with the repository search scope, queries and results, or a type/ownership bound. Group sites only when one argument covers them. Unknown coverage is an actionable `enumeration incomplete` finding; assertions of exhaustiveness are insufficient.
-- Identify repository-supported fast validation commands and broader tests, what they cover, and when implementation should run them. Mark unverified commands; do not claim that proposed code passes checks.
-- Report all evidenced gaps in the current pass, grouped by root cause. For each addressed finding, provide `Class sweep: scope searched; affected sites; enforcement point; verification; remaining exceptions`. Distinguish planned verification from executed checks.
-- Update the coverage artifact incrementally. Reviewers verify its evidence independently and inspect the effects of revisions, including newly affected sites.
+- Produce ordered steps, affected files, decisions, compatibility concerns, tests, and validation. Identify each changed invariant's enforcement point and how affected paths reach it; checks or warnings suffice only when they prevent prohibited behavior.
+- Maintain `affected site and operation | planned change | verification`, including consumers, siblings, and relevant failure and lifecycle paths. Bound completeness with repository search scope, queries, and results or a type or ownership argument. Group only sites sharing proof. Unknown required coverage is a blocker `enumeration incomplete` with unverified evidence.
+- Identify repository-supported fast checks and broader tests, their coverage, and when implementation runs them. Mark unverified commands and distinguish planned from executed checks; proposed code cannot claim a pass.
+- Report evidenced gaps by root cause and severity. Blockers prevent required outcomes, omit necessary enforcement or affected paths, or risk unauthorized access, data loss, or failed deployment. Majors are substantial defects below that threshold; minors have lower impact. Missing evidence or unbounded inventory remains `unverified` with the unresolved obligation, without reduced severity. Addressed findings need `Class sweep: scope searched; affected sites; enforcement point; verification; remaining exceptions`.
+- Update coverage incrementally; reviewers independently check revisions and newly affected sites.
 
 ## Loop
 
-Keep a cumulative ledger: `ID | invariant/class | open, closed, or deferred | latest evidence`. Assign a new ID only to a new class; retain closure evidence and reopen the same ID when disproved. Close findings only after independent review; record authorized deferrals and reasons separately from closure.
+Keep `ID | invariant and class | severity | open/closed/deferred | latest evidence`. Reuse class IDs and preserve closure evidence; independent review closes findings and contrary evidence reopens them. Record authorized deferrals and reasons without changing severity. Workers name IDs for current blockers or majors (including proposed closures), disputes at any severity, adjudication requests, reopening, conflicting reports, and unbounded uncertainty.
 
-For each cycle, until no actionable findings remain or `max cycles` is reached:
+Cycle until no actionable findings remain, `max cycles` is reached, or budget expires:
 
-1. Delegate one planning pass the goal, relevant user decisions, repository context, current plan, coverage artifact, ledger, and plan and coverage contract. Require repository inspection and root-cause design.
-2. Delegate `review parallelism` independent reviews to fresh workers. Give each the goal, plan, relevant repository context, ledger, coverage artifact, and plan and coverage contract. Ask for actionable gaps, sequencing problems, risks, missing tests, and unnecessary scope. Require repository evidence (`path:line`, symbol, or command result); label unverified objections as concerns. Reuse matching class IDs. List out-of-scope suggestions separately. When `propose_improvements` is true, separately propose reusable instruction changes that would have prevented findings; exclude project-specific advice.
-3. Have one fresh critic adjudicate findings, closure evidence, and coverage gaps against the plan, repository, ledger, and plan and coverage contract; it may also raise missed findings. Its response must end with exactly one verdict line:
+1. Delegate a planner the goal, decisions, repository context, current plan, coverage, ledger, and contract. Require repository inspection and root-cause design.
+2. Launch fresh independent reviewers within parallelism, supplying the same inputs. Require actionable gaps, sequencing problems, risks, missing tests, and unnecessary scope, supported by `path:line`, symbol, or command result. Label unverified objections as concerns; reuse class IDs and separate out-of-scope suggestions. If improvements are enabled, request reusable instruction changes separately, excluding project-specific advice.
+3. Under `critic: auto`, require a fresh critic for:
+   - A current open blocker or major, or proposed closure of one.
+   - A planner or reviewer dispute over a named finding at any severity, including disagreement with its severity rating.
+   - Reviewer-requested adjudication.
+   - Security-sensitive work.
+   - A reopened finding.
+   - Conflicting reports.
+   - Reviewer-reported unbounded uncertainty.
+
+   Route from reports and IDs without substituting coordinator judgment or lowering severity; old independently closed findings alone do not trigger. Record trigger and IDs or omission rationale, reevaluating after late evidence. Give the critic focused evidence, plan revision, ledger, coverage, contract, and artifact index with access to more. Require adjudication and missed findings; end with exactly one verdict:
 
    ```text
    AGREE
@@ -55,11 +64,11 @@ For each cycle, until no actionable findings remain or `max cycles` is reached:
    DISAGREE_CONCERN: <specific unverified objection>
    ```
 
-   `AGREE` preserves all findings. `DISAGREE_EVIDENCE` may add, revise, or reject findings only as supported by the cited evidence. `DISAGREE_CONCERN` cannot suppress a finding: delegate one concise evidence-resolution pass using the worker-selection rule, then retain only claims grounded in the repository. Do not continue reviewer–critic debate beyond this pass.
-4. Combine duplicate evidence-backed findings by class; one clean review cannot override another's actionable finding. Accept only when no actionable open findings remain and all assigned reviews and the critic validly cover the final plan revision. Any later substantive edit requires renewed review of its effects. Otherwise pass the updated ledger and coverage artifact to the next planner.
+   `AGREE` preserves findings. `DISAGREE_EVIDENCE` may change findings only as its evidence supports. For a concern, delegate one concise evidence-resolution pass under worker-selection rules; retain grounded claims and unresolved gaps, then end debate. Concerns cannot suppress findings.
+4. Combine duplicate evidence-backed findings by class; one clean review cannot override another's actionable finding. Accept only with no actionable open findings and valid final-revision coverage from every assigned review and required critic. Evidence gaps require resolution, never omitted scrutiny or a pass. Later substantive edits renew review of affected areas. Otherwise send updated ledger and coverage to the next planner.
 
-If the same class remains unresolved across two successive revisions without new closure evidence, require a different approach in the next planning pass. If that pass also makes no progress, stop as incomplete with the unresolved evidence. `max cycles` and invalid-pass limits also stop the loop; none imply approval.
+Two successive revisions of the same class without new closure evidence require a different approach in the next pass. If it also stalls, stop incomplete with unresolved evidence. Cycle and invalid-pass limits also bind; no stop implies approval.
 
 ## Deliver
 
-Include enough detail for an implementation agent to execute without rediscovering the design. Separate assumptions and out-of-scope suggestions from implementation steps. If `propose_improvements` is true, add a concise **Potential skill improvements** section to the end report. Each item must state the reusable instruction change and the category of review iteration it is expected to prevent; omit empty or project-specific suggestions. If the user requested a file, write the final plan there. Otherwise, display it. Report any deferrals or reason the loop stopped before approval.
+Make the plan executable without rediscovering its design: baseline revision and dirty inputs; goal and acceptance criteria; decisions and authority; invariant and consumer inventory with evidence; ordered steps; proposed or executed validation; unresolved findings, coverage, and review status. Keep this in the plan, without a duplicate handoff document. Later review-loop runs may validate and reuse it; it starts no implementation, supplies no code validation, and grants no authority. Separate assumptions and out-of-scope suggestions. If enabled, include reusable instruction improvements and the iterations they could prevent. Write the requested file or display the plan; report deferrals, omitted-critic rationale, cost and context metrics, and incomplete stop reasons.
